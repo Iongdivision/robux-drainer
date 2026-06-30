@@ -70,4 +70,4 @@ Example: robux*.txt rap*.txt (u:p:c)
 For educational purposes only. Use at your own risk. I don't support hacking or brutting accounts
 
 ## Support
-For technical help you can always open ticket on our server https://discord.gg/kellystock
+For technical help you can always open ticket on our server https://discord.gg/kellysolve
